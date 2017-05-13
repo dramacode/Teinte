@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  
+
 <h1>TEI » HTML (tei2html.xsl)</h1>
 
 LGPL  http://www.gnu.org/licenses/lgpl.html
 © 2005 ajlsm.com (Cybertheses)
 © 2007 Frederic.Glorieux@fictif.org
 © 2010 Frederic.Glorieux@fictif.org et École nationale des chartes
-© 2012 Frederic.Glorieux@fictif.org 
+© 2012 Frederic.Glorieux@fictif.org
 © 2013 Frederic.Glorieux@fictif.org et LABEX OBVIL
 
 <p>
-Cette transformation XSLT 1.0 (compatible navigateurs, PHP, Python, Java…) 
+Cette transformation XSLT 1.0 (compatible navigateurs, PHP, Python, Java…)
 transforme du TEI en HTML5.
 </p>
 <p>
@@ -19,16 +19,31 @@ Alternative : les transformations de Sebastian Rahtz <a href="http://www.tei-c.
 sont officiellement ditribuées par le consortium TEI, cependant ce développement est en XSLT 2.0 (java requis).
 </p>
 -->
-<xsl:transform version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:rng="http://relaxng.org/ns/structure/1.0" xmlns:eg="http://www.tei-c.org/ns/Examples" xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" exclude-result-prefixes="eg html rng tei epub" xmlns:exslt="http://exslt.org/common" extension-element-prefixes="exslt">
+<xsl:transform version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:rng="http://relaxng.org/ns/structure/1.0"
+  xmlns:eg="http://www.tei-c.org/ns/Examples"
+  xmlns:tei="http://www.tei-c.org/ns/1.0"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  xmlns:epub="http://www.idpf.org/2007/ops"
+  exclude-result-prefixes="eg html rng tei epub"
+  xmlns:exslt="http://exslt.org/common"
+  extension-element-prefixes="exslt"
+  >
+  <!--
   <xsl:import href="common.xsl"/>
+  -->
   <xsl:import href="tei2toc.xsl"/>
+  <!-- used as a body class -->
+  <xsl:param name="folder"/>
   <!-- included, so that priorities will not be flatten by import chain (ex: from tei2site.html) -->
   <xsl:include href="teiHeader2html.xsl"/>
   <!-- Name of this xsl, change link resolution  -->
   <xsl:variable name="this">tei2html.xsl</xsl:variable>
   <!--
 La méthode de sortie est xml, pour faire du html5.
-L'utilisation des attributs 
+L'utilisation des attributs
 est contraignante, difficile à surcharger par les transformations qui veulent une
 absence de déclaration de DTD.
 -->
@@ -51,11 +66,21 @@ absence de déclaration de DTD.
     <xsl:apply-templates select="." mode="html"/>
   </xsl:template>
   <xsl:template match="/*" mode="html">
+    <xsl:variable name="bodyclass">
+      <xsl:value-of select="$corpusid"/>
+      <xsl:text> </xsl:text>
+      <xsl:value-of select="$folder"/>
+    </xsl:variable>
     <xsl:choose>
       <!-- Just a div element -->
       <xsl:when test="$root= $article">
         <article>
           <xsl:call-template name="att-lang"/>
+          <xsl:if test="normalize-space($bodyclass)">
+            <xsl:attribute name="class">
+              <xsl:value-of select="normalize-space($bodyclass)"/>
+            </xsl:attribute>
+          </xsl:if>
           <xsl:apply-templates/>
         </article>
       </xsl:when>
@@ -78,7 +103,12 @@ absence de déclaration de DTD.
             <link rel="stylesheet" charset="utf-8" type="text/css" href="{$theme}tei2html.css"/>
             <script type="text/javascript" charset="utf-8" src="{$theme}Tree.js">//</script>
           </head>
-          <body class="{$corpusid}">
+          <body>
+            <xsl:if test="normalize-space($bodyclass)">
+              <xsl:attribute name="class">
+                <xsl:value-of select="normalize-space($bodyclass)"/>
+              </xsl:attribute>
+            </xsl:if>
             <div id="center">
               <div id="main">
                 <div id="article">
@@ -148,13 +178,13 @@ Des comportement peuvent varier.
 </p>
 
 <p>
-<strong>Niveau de titre</strong> — &lt;h1> en tête de fichier, 
-et -1 pour chaque niveau ensuite, d'où le paramètre $level qui peut 
+<strong>Niveau de titre</strong> — &lt;h1> en tête de fichier,
+et -1 pour chaque niveau ensuite, d'où le paramètre $level qui peut
 être modifié par l'appeleur.
 </p>
 
 <p>
-<strong>Notes</strong> — Les notes peuvent être sorties en bas de chaque fichier 
+<strong>Notes</strong> — Les notes peuvent être sorties en bas de chaque fichier
 (une section ou tout le texte), rassemblées dans un fichier à part, sorties par texte
 (group/text)
 </p>
@@ -446,10 +476,10 @@ et -1 pour chaque niveau ensuite, d'où le paramètre $level qui peut
   </xsl:template>
   <!-- Autres titres -->
   <xsl:template match="tei:titlePart">
-    <h1>
+    <div>
       <xsl:call-template name="atts"/>
       <xsl:apply-templates/>
-    </h1>
+    </div>
   </xsl:template>
   <!--
 <h3>Paragraphs</h3>
@@ -486,10 +516,10 @@ et -1 pour chaque niveau ensuite, d'où le paramètre $level qui peut
   <!-- To think, rendering ? -->
   <xsl:template match="tei:sp">
     <div>
-      <xsl:call-template name="atts"/>
       <xsl:attribute name="id">
         <xsl:call-template name="id"/>
       </xsl:attribute>
+      <xsl:call-template name="atts"/>
       <xsl:apply-templates/>
     </div>
   </xsl:template>
@@ -497,23 +527,21 @@ et -1 pour chaque niveau ensuite, d'où le paramètre $level qui peut
   <xsl:template match="tei:p">
     <p>
       <xsl:variable name="prev" select="preceding-sibling::*[not(self::tei:pb)][1]"/>
-      <xsl:choose>
-        <xsl:when test="contains(concat(' ', @rend, ' '), 'indent')">
-          <xsl:call-template name="atts"/>
-        </xsl:when>
-        <xsl:when test="$prev and contains('-–—', substring(normalize-space($prev), 1, 1))">
-          <xsl:call-template name="atts"/>
-        </xsl:when>
-        <xsl:when test="local-name($prev) ='p' and translate($prev, '*∾  ','')!=''">
-          <xsl:call-template name="atts"/>
-        </xsl:when>
-        <!-- premier paragraphe d’une série ? -->
-        <xsl:otherwise>
-          <xsl:call-template name="atts">
-            <xsl:with-param name="class">noindent</xsl:with-param>
-          </xsl:call-template>
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:variable name="char1" select="substring( normalize-space(.), 1, 1)"/>
+      <xsl:variable name="class">
+        <xsl:choose>
+          <xsl:when test="contains( '-–—0123456789', $char1 )"/>
+          <xsl:when test="contains(concat(' ', @rend, ' '), ' indent ')"/>
+          <!--
+          <xsl:when test="$prev and contains('-–—', substring(normalize-space($prev), 1, 1))"/>
+          -->
+          <xsl:when test="local-name($prev) ='p' and translate($prev, '*∾  ','')!=''"/>
+          <xsl:otherwise>autofirst</xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>     
+      <xsl:call-template name="atts">
+        <xsl:with-param name="class" select="$class"/>
+      </xsl:call-template>
       <xsl:if test="@n">
         <small class="n">
           <xsl:text>[</xsl:text>
@@ -526,7 +554,7 @@ et -1 pour chaque niveau ensuite, d'où le paramètre $level qui peut
       <xsl:if test=".=''"> </xsl:if>
     </p>
   </xsl:template>
-  <xsl:template match="tei:acheveImprime | tei:byline | tei:caption | tei:dateline | tei:desc | tei:docEdition | tei:docImprint | tei:imprimatur | tei:performance | tei:premiere | tei:printer | tei:privilege | tei:signed | tei:salute | tei:set | tei:trailer
+  <xsl:template match="tei:acheveImprime | tei:approbation | tei:byline | tei:caption | tei:dateline | tei:desc | tei:docEdition | tei:docImprint | tei:imprimatur | tei:performance | tei:premiere | tei:printer | tei:privilege | tei:signed | tei:salute | tei:set | tei:trailer
     ">
     <xsl:variable name="el">
       <xsl:choose>
@@ -536,10 +564,12 @@ et -1 pour chaque niveau ensuite, d'où le paramètre $level qui peut
         <xsl:otherwise>div</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    <xsl:element name="{$el}" namespace="http://www.w3.org/1999/xhtml">
-      <xsl:call-template name="atts"/>
-      <xsl:apply-templates/>
-    </xsl:element>
+    <xsl:if test="normalize-space(.) != '' ">
+      <xsl:element name="{$el}" namespace="http://www.w3.org/1999/xhtml">
+        <xsl:call-template name="atts"/>
+        <xsl:apply-templates/>
+      </xsl:element>
+    </xsl:if>
   </xsl:template>
   <xsl:template match="tei:address">
     <address>
@@ -555,9 +585,20 @@ et -1 pour chaque niveau ensuite, d'où le paramètre $level qui peut
       <xsl:when test="@type='hr'">
         <hr align="center" width="30%"/>
       </xsl:when>
-      <xsl:otherwise>
+      <xsl:when test="normalize-space(.) = ''">
         <div>
           <xsl:call-template name="atts"/>
+          <xsl:text> </xsl:text>
+          <xsl:apply-templates/>
+        </div>
+      </xsl:when>
+      <xsl:otherwise>
+        <div>
+          <xsl:call-template name="atts">
+            <xsl:with-param name="class">
+              <xsl:if test="substring(normalize-space(.), 1, 1) = '*'">star</xsl:if>
+            </xsl:with-param>
+          </xsl:call-template>
           <xsl:apply-templates/>
         </div>
       </xsl:otherwise>
@@ -893,15 +934,17 @@ Tables
     </xsl:element>
   </xsl:template>
   <!-- vers, strophe -->
-  <xsl:template match="tei:lg[tei:lg]">
-    <div>
-      <xsl:call-template name="atts"/>
-      <xsl:apply-templates/>
-    </div>
-  </xsl:template>
+
   <xsl:template match="tei:lg">
     <div>
-      <xsl:call-template name="atts"/>
+      <xsl:call-template name="atts">
+        <xsl:with-param name="class">
+          <xsl:if test="@part">
+            <xsl:text>part-</xsl:text>
+            <xsl:value-of select="translate(@part, 'fimy', 'FIMY')"/>
+          </xsl:if>
+        </xsl:with-param>
+      </xsl:call-template>
       <xsl:apply-templates/>
     </div>
   </xsl:template>
@@ -917,7 +960,9 @@ Tables
     <xsl:variable name="n">
       <xsl:call-template name="l-n"/>
     </xsl:variable>
+    <!-- or $prev/@n = $n SLOW
     <xsl:variable name="prev" select="preceding::tei:l[1]"/>
+    -->
     <xsl:choose>
       <!-- probablement vers vide pour espacement -->
       <xsl:when test="normalize-space(.) =''">
@@ -925,19 +970,52 @@ Tables
       </xsl:when>
       <xsl:otherwise>
         <div>
+          <xsl:variable name="pos">
+            <xsl:number/>
+          </xsl:variable>
           <xsl:call-template name="atts">
             <xsl:with-param name="class">
               <xsl:if test="@part">
                 <xsl:text>part-</xsl:text>
                 <xsl:value-of select="translate(@part, 'fimy', 'FIMY')"/>
               </xsl:if>
+              <xsl:if test="@met">
+                <xsl:text> </xsl:text>
+                <xsl:value-of select="@met"/>
+              </xsl:if>
+              <!-- first verse in stanza -->
+              <xsl:choose>
+                <!-- Not in a stanza -->
+                <xsl:when test="not(parent::tei:lg)"/>
+                <!-- Is it a broken verse to align ? -->
+                <xsl:when test="@part and @part != 'I'">
+                  <!-- search if previous verse should be aligned -->
+                  <xsl:for-each select="preceding::tei:l[@part='I'][1]">
+                    <xsl:variable name="first">
+                      <xsl:number/>
+                    </xsl:variable>
+                    <xsl:choose>
+                      <xsl:when test="$first != 1"/>
+                      <xsl:when test="not(parent::tei:lg)"/>
+                      <xsl:when test="not(parent::tei:lg/@part) or parent::tei:lg/@part = 'I'"> first</xsl:when>
+                    </xsl:choose>
+                  </xsl:for-each>
+                </xsl:when>
+                <xsl:when test="$pos != 1"/>
+                <!-- first but in a stanza fragment-->
+                <xsl:when test="parent::tei:lg/@part and parent::tei:lg/@part != 'I'"/>
+                <!-- first verse in a stanza -->
+                <xsl:when test="$pos = 1">
+                  <xsl:text> first</xsl:text>
+                </xsl:when>
+              </xsl:choose>
             </xsl:with-param>
           </xsl:call-template>
           <xsl:choose>
             <xsl:when test="not(number($n))"/>
             <xsl:when test="$n &lt; 1"/>
             <!-- previous verse has same number, usually a rupted verse -->
-            <xsl:when test="@part='M' or @part='F' or $prev/@n = $n"/>
+            <xsl:when test="@part='M' or @part='F'"/>
             <!-- line number could be multiple in a file, do not check repeated number in broken verses  -->
             <xsl:when test="ancestor::tei:quote"/>
             <xsl:when test="($n mod 5) = 0">
@@ -948,11 +1026,11 @@ Tables
             </xsl:when>
           </xsl:choose>
           <xsl:if test="@part = 'M' or @part = 'm' or @part = 'F' or @part = 'f'  or @part = 'y'  or @part = 'Y'">
+            <!-- Rupted verse, get the exact spacer from previous verse -->
             <xsl:variable name="txt">
-              <xsl:apply-templates select="preceding::tei:l[ancestor::tei:body][1]" mode="lspacer"/>
+              <xsl:apply-templates select="preceding::tei:l[1]" mode="lspacer"/>
             </xsl:variable>
             <xsl:if test="normalize-space($txt) != ''">
-              <!-- Rupted verse, get the exact spacer from previous verse -->
               <span class="spacer" style="visibility: hidden;">
                 <xsl:value-of select="$txt"/>
               </span>
@@ -968,6 +1046,8 @@ Tables
       <xsl:apply-templates mode="title"/>
     </xsl:variable>
     <xsl:choose>
+      <!-- ??? -->
+      <xsl:when test="not(ancestor::tei:body)"/>
       <!-- encoding error -->
       <xsl:when test="not(@part)"/>
       <!-- encoding error -->
@@ -1120,7 +1200,7 @@ Tables
   </xsl:template>
   <!--
     use the @scheme for a link ? TEI, Docbook…
-    
+
     -->
   <xsl:template match="tei:tag">
     <code class="language-xml prettyprint">
@@ -1150,7 +1230,7 @@ Tables
   <xsl:template match="tei:memberOf">
     <xsl:value-of select="@key"/>
   </xsl:template>
-  <!-- 
+  <!--
   zeroOrMore xmlns="http://relaxng.org/ns/structure/1.0">
       <choice
   -->
@@ -1466,7 +1546,7 @@ Tables
       <xsl:apply-templates/>
     </span>
   </xsl:template>
-  <!-- 
+  <!--
 <h3>Liens</h3>
   -->
   <!-- Template to override  -->
@@ -1478,9 +1558,12 @@ Tables
           <xsl:value-of select="@subtype"/>
         </xsl:attribute>
       </xsl:if>
+      <xsl:variable name="html">
+        <xsl:apply-templates/>
+      </xsl:variable>     
       <xsl:choose>
-        <xsl:when test=". != ''">
-          <xsl:apply-templates/>
+        <xsl:when test="string($html) != ''">
+          <xsl:copy-of select="$html"/>
         </xsl:when>
         <xsl:otherwise>
           <xsl:call-template name="anchors">
@@ -1537,13 +1620,13 @@ Tables
       <xsl:value-of select="@target"/>
     </a>
   </xsl:template>
-  <!-- Quelque chose à faire ? 
+  <!-- Quelque chose à faire ?
 
 <figure>
   <graphic url="../../../../elec/conferences/src/knoch-mund/olgiati.png"/>
   <head>© Mirta Olgiati</head>
 </figure>
-  
+
 <figure class="right">
   <a href="ferri/grande/Ill_2_Grillando.jpg"><img src="ferri/petite/Ill_2_Grillando.jpg" height="155" width="250"></a>
   <figcaption style="width: 250px;">
@@ -1551,7 +1634,7 @@ Tables
     [ill. 1] Paolo Grillando, Tractat[um] de hereticis et sortilegijs…, Lyon, 1536 [page de titre]. Cornell Library, Division of Rare Books and Manuscripts, Witchcraft BF1565 G85 1536.
     </figcaption>
 </figure>
-      
+
   -->
   <xsl:template match="tei:figure | tei:facsimile">
     <xsl:param name="el">
@@ -1677,7 +1760,9 @@ Tables
   </xsl:template>
   -->
   <!-- Poetic information, rendering? -->
-  <xsl:template match="tei:caesura"/>
+  <xsl:template match="tei:caesura">
+    <xsl:text> </xsl:text>
+  </xsl:template>
   <!-- Cross without a trace? -->
   <xsl:template match="tei:corr">
     <xsl:choose>
@@ -1839,9 +1924,9 @@ Tables
   <xsl:template match="tei:author | tei:biblScope | tei:collation | tei:collection | tei:dim | tei:docAuthor | tei:editor | tei:edition | tei:extent | tei:funder | tei:publisher | tei:stamp | tei:biblFull/tei:titleStmt/tei:title">
     <xsl:variable name="element">
       <xsl:choose>
-        <xsl:when test="parent::titlePage">p</xsl:when>
-        <xsl:when test="parent::front">p</xsl:when>
-        <xsl:when test="parent::div">p</xsl:when>
+        <xsl:when test="parent::tei:titlePage">p</xsl:when>
+        <xsl:when test="parent::tei:front">p</xsl:when>
+        <xsl:when test="parent::tei:div">p</xsl:when>
         <xsl:otherwise>span</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
@@ -2009,7 +2094,7 @@ Tables
     </a>
   </xsl:template>
   <!--
-Elements block or inline level 
+Elements block or inline level
    -->
   <xsl:template match="tei:listBibl/tei:bibl">
     <li>
@@ -2053,6 +2138,7 @@ Elements block or inline level
       <xsl:otherwise>
         <xsl:variable name="el">
           <xsl:choose>
+            <xsl:when test="self::tei:label and parent::tei:figure">div</xsl:when>
             <xsl:when test="self::tei:label">p</xsl:when>
             <xsl:when test="self::tei:quote">blockquote</xsl:when>
             <xsl:otherwise>div</xsl:otherwise>
@@ -2061,8 +2147,9 @@ Elements block or inline level
         <xsl:element name="{$el}" namespace="http://www.w3.org/1999/xhtml">
           <xsl:call-template name="atts">
             <xsl:with-param name="class">
+              <xsl:value-of select="local-name()"/>
               <!-- modify rendering when contain verses -->
-              <xsl:if test="tei:l">l</xsl:if>
+              <xsl:if test="tei:l"> l</xsl:if>
               <xsl:if test="tei:lg"> lg</xsl:if>
               <xsl:if test="@corresp"> corresp</xsl:if>
             </xsl:with-param>
@@ -2143,7 +2230,7 @@ Elements block or inline level
 
 -->
   <!--
-Call that in 
+Call that in
   -->
   <xsl:template name="footnotes">
     <!-- children from which find notes -->
@@ -2360,11 +2447,11 @@ Call that in
   <xsl:template match="tei:note | tei:*[@rend='note']">
     <xsl:choose>
       <xsl:when test="@place = 'margin'">
-        <span>
+        <aside>
           <xsl:call-template name="atts"/>
           <xsl:attribute name="class">marginalia</xsl:attribute>
           <xsl:apply-templates/>
-        </span>
+        </aside>
       </xsl:when>
       <xsl:otherwise>
         <xsl:call-template name="noteref"/>
@@ -2404,7 +2491,7 @@ Call that in
           </xsl:choose>
         </xsl:variable>
         <!-- FBRreader -->
-        <a class="{$class}" href="#{$id}" id="{$id}_">
+        <a class="{$class}" href="{$target}" id="{$id}_">
           <xsl:if test="$format = $epub3">
             <xsl:attribute name="epub:type">noteref</xsl:attribute>
           </xsl:if>
@@ -2431,7 +2518,7 @@ Call that in
       </xsl:when>
       <!--
       <xsl:when test="self::tei:app">
-        <xsl:number count="tei:app" format="a" level="any" from="*[key('split', generate-id())]"/> 
+        <xsl:number count="tei:app" format="a" level="any" from="*[key('split', generate-id())]"/>
       </xsl:when>
       note number by book, not by chapter
       <xsl:when test="$hasformat and ancestor::*[key('split', generate-id())] and $fnpage = ''">
@@ -2468,15 +2555,12 @@ Call that in
             <xsl:value-of select="substring-before(concat(@target, ' '), ' ')"/>
           </xsl:when>
           <xsl:otherwise>
-            <!-- ??
+            <!-- Call a centralized note href template, for epub deported notes -->
             <xsl:call-template name="href">
               <xsl:with-param name="class">
                 <xsl:value-of select="$class"/>
               </xsl:with-param>
             </xsl:call-template>
-            -->
-            <xsl:text>#</xsl:text>
-            <xsl:value-of select="$id"/>
             <xsl:text>_</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
@@ -2558,7 +2642,7 @@ Call that in
       </xsl:when>
       <!-- Note normalisée pour ajout -->
       <xsl:when test="self::tei:supplied">
-        <!-- Pas besoin de rappel pour note en contexte 
+        <!-- Pas besoin de rappel pour note en contexte
         <xsl:choose>
           <xsl:when test="local-name(..)='w'">
             <xsl:apply-templates select=".." mode="title"/>
@@ -2593,7 +2677,7 @@ Call that in
       </xsl:when>
       <!-- Note normalisée pour correction -->
       <xsl:when test="self::tei:choice">
-        <!-- pas de rappel de la forme corrigée 
+        <!-- pas de rappel de la forme corrigée
         <xsl:apply-templates select="tei:corr/node() | tei:expan/node() | tei:reg/node()"/>
         <xsl:text> </xsl:text>
         -->
@@ -3202,6 +3286,8 @@ Centralize some html attribute policy, especially for id, and class
       </xsl:if>
       <xsl:text> </xsl:text>
       <xsl:value-of select="@type"/>
+      <xsl:text> </xsl:text>
+      <xsl:value-of select="@subtype"/>
       <xsl:text> </xsl:text>
       <xsl:value-of select="@role"/>
       <xsl:text> </xsl:text>

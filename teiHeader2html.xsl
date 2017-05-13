@@ -12,7 +12,7 @@ transforme du TEI en HTML5.
 Alternative : les transformations de Sebastian Rahtz <a href="http://www.tei-c.org/Tools/Stylesheets/">tei-c.org/Tools/Stylesheets/</a>
 sont officiellement ditribuées par le consortium TEI, cependant ce développement est en XSLT 2.0 (java requis).
 -->
-<xsl:transform version="1.1"   xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+<xsl:transform version="1.0"   xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
 
   xmlns="http://www.w3.org/1999/xhtml"
   xmlns:tei="http://www.tei-c.org/ns/1.0" 
@@ -184,9 +184,9 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         <xsl:call-template name="message"/>
       </xsl:variable>
       <xsl:if test="string($message) != '' and string($message) != local-name()">
-        <label>
+        <b>
           <xsl:value-of select="$message"/>
-        </label>
+        </b>
       </xsl:if>
       <xsl:apply-templates/>
     </xsl:element>
@@ -203,7 +203,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         </div>
       </xsl:when>
       <!-- Paul Fièvre, temporaire -->
-      <xsl:when test="tei:permalien"/>
+      <xsl:when test="tei:permalien | tei:inspiration | tei:genre"/>
       <xsl:when test="normalize-space(.) = ''"/>
       <xsl:otherwise>
         <div>
@@ -214,19 +214,19 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
           <xsl:choose>
             <xsl:when test="tei:bibl">
               <xsl:for-each select="tei:bibl">
-                <label>
+                <b>
                   <xsl:value-of select="$message"/>
                   <xsl:text> : </xsl:text>
-                </label>
+                </b>
                 <xsl:apply-templates select="./node()"/>
                 <xsl:if test="position()!=last()"><br/></xsl:if>
               </xsl:for-each>
             </xsl:when>
             <xsl:when test="tei:msDesc">
-              <label>
+              <b>
                 <xsl:value-of select="$message"/>
                 <xsl:text> : </xsl:text>
-              </label>
+              </b>
               <xsl:apply-templates select="tei:msDesc[1]"/>
             </xsl:when>
             <xsl:otherwise>
@@ -421,11 +421,11 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         <div>
           <xsl:call-template name="headatts"/>
           <!-- Reorder -->
-          <xsl:apply-templates select="tei:title"/>
           <xsl:apply-templates select="tei:author"/>
+          <xsl:apply-templates select="/*/tei:teiHeader[1]/tei:profileDesc[1]/tei:creation[1]"/>
+          <xsl:apply-templates select="tei:title"/>
           <xsl:apply-templates select="tei:editor | tei:funder | tei:meeting | tei:principal | tei:sponsor"/>
           <xsl:apply-templates select="tei:respStmt"/>
-          <xsl:apply-templates select="/*/tei:teiHeader[1]/tei:profileDesc[1]/tei:creation[1]"/>
           <xsl:if test="../tei:publicationStmt/tei:date">
             <div class="date">
               <xsl:apply-templates select="../tei:publicationStmt/tei:date"/>

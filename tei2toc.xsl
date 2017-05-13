@@ -4,11 +4,11 @@
 <h1>TEI » HTML (tei2html.xsl)</h1>
 
 LGPL  http://www.gnu.org/licenses/lgpl.html
-© 2005 ajlsm.com (Cybertheses)
-© 2007 Frederic.Glorieux@fictif.org
-© 2010 Frederic.Glorieux@fictif.org et École nationale des chartes
-© 2012 Frederic.Glorieux@fictif.org 
 © 2013 Frederic.Glorieux@fictif.org et LABEX OBVIL
+© 2012 Frederic.Glorieux@fictif.org 
+© 2010 Frederic.Glorieux@fictif.org et École nationale des chartes
+© 2007 Frederic.Glorieux@fictif.org
+© 2005 ajlsm.com et Cybertheses
 
 <p>
 Cette transformation XSLT 1.0 (compatible navigateurs, PHP, Python, Java…) 
@@ -22,13 +22,24 @@ Alternative : les transformations de Sebastian Rahtz <a href="http://www.tei-c.
 sont officiellement ditribuées par le consortium TEI, cependant ce développement est en XSLT 2.0 (java requis).
 </p>
 -->
-<xsl:transform version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:rng="http://relaxng.org/ns/structure/1.0" xmlns:eg="http://www.tei-c.org/ns/Examples" xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" exclude-result-prefixes="eg html rng tei epub" xmlns:exslt="http://exslt.org/common" extension-element-prefixes="exslt">
+<xsl:transform version="1.0" 
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+  xmlns="http://www.w3.org/1999/xhtml" 
+  xmlns:rng="http://relaxng.org/ns/structure/1.0"
+  xmlns:eg="http://www.tei-c.org/ns/Examples"
+  xmlns:tei="http://www.tei-c.org/ns/1.0"
+  xmlns:html="http://www.w3.org/1999/xhtml" 
+  xmlns:epub="http://www.idpf.org/2007/ops" 
+  exclude-result-prefixes="eg html rng tei epub" 
+  xmlns:exslt="http://exslt.org/common" 
+  extension-element-prefixes="exslt"
+  >
   <xsl:import href="common.xsl"/>
   <!-- Name of this xsl  -->
   <xsl:param name="this">tei2toc.xsl</xsl:param>
   <!-- No XML declaration for html fragments -->
   <xsl:output encoding="UTF-8" indent="yes" method="xml" omit-xml-declaration="yes"/>
-  <!-- What kind of root element to output ? html, nav, only front toc, or back or body -->
+  <!-- What kind of root element to output ? html, nav… -->
   <xsl:param name="root" select="$html"/>
   <!-- Racine -->
   <xsl:template match="/*">
@@ -38,10 +49,14 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
       </xsl:when>      
       <xsl:when test="$root=$back">
         <xsl:call-template name="toc-back"/>
-      </xsl:when>      
+      </xsl:when>
+      <!-- HTML fragment -->
+      <xsl:when test="$root=$ul or $root=$ol">
+        <xsl:call-template name="toc"/>
+      </xsl:when>
       <!-- HTML fragment -->
       <xsl:when test="$root=$nav">
-        <nav>
+        <nav class="toc">
           <xsl:call-template name="att-lang"/>
           <xsl:call-template name="toc-header"/>
           <xsl:call-template name="toc"/>
@@ -74,6 +89,21 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
     </xsl:choose>
   </xsl:template>
 
+  <!-- Générer une navigation dans les sections -->
+  <xsl:template name="toc">
+    <xsl:variable name="html">
+      <xsl:apply-templates select="/*/tei:text/tei:front" mode="li"/>
+      <xsl:apply-templates select="/*/tei:text/tei:body" mode="li"/>
+      <xsl:apply-templates select="/*/tei:text/tei:group" mode="li"/>
+      <xsl:apply-templates select="/*/tei:text/tei:back" mode="li"/>
+    </xsl:variable>
+    <xsl:if test="$html != ''">
+      <ol class="tree">
+        <xsl:copy-of select="$html"/>
+      </ol>
+    </xsl:if>
+  </xsl:template>
+  
   <xsl:template name="toc-header">
     <header>
       <a>
@@ -217,25 +247,25 @@ mais aussi pour le liage dans l'apparat critique. Ce mode fait usage des modes 
       <xsl:call-template name="a"/>
     </li>
   </xsl:template>
+
   <xsl:template match="tei:back | tei:body | tei:front" mode="li">
     <xsl:param name="class">tree</xsl:param>
     <!-- un truc pour pouvoir maintenir ouvert des niveaux de table des matières -->
     <xsl:param name="less" select="0"/>
     <!-- limit depth -->
     <xsl:param name="depth"/>
+    <xsl:variable name="children" select="tei:group | tei:text | tei:div[tei:head] 
+      | tei:div0[tei:head] | tei:div1[tei:head] | tei:div2[tei:head] | tei:div3[tei:head] | tei:div4[tei:head] | tei:div5[tei:head] | tei:div6[tei:head] | tei:div7[tei:head] "/>
     <xsl:choose>
+      <xsl:when test="count($children) &lt; 2"/>
       <!-- simple content ? -->
-      <xsl:when test="tei:p | tei:l | tei:list | tei:argument | tei:table | tei:docTitle | tei:docAuthor">
+      <xsl:when test="not(tei:castList | tei:div | tei:div1 | tei:titlePage)">
         <li>
           <xsl:call-template name="a"/>
         </li>
       </xsl:when>
-      <xsl:when test="count(*) = 1">
-        <xsl:apply-templates select="*/*" mode="li"/>
-      </xsl:when>
-      <!-- div content -->
-      <xsl:otherwise>
-        <li class="more">
+      <xsl:when test="self::tei:front or self::tei:back">
+        <li class="more {local-name()}">
           <span>
             <xsl:call-template name="title"/>
           </span>
@@ -245,16 +275,19 @@ mais aussi pour le liage dans l'apparat critique. Ce mode fait usage des modes 
                 <!-- ??? first section with no title, no forged title -->
                 <xsl:when test="self::div and position() = 1 and not(tei:head) and ../tei:head "/>
                 <xsl:otherwise>
-                  <xsl:apply-templates select="." mode="li">
-                    <xsl:with-param name="less" select="number($less) - 1"/>
-                    <xsl:with-param name="depth" select="number($depth) - 1"/>
-                    <xsl:with-param name="class"/>
-                  </xsl:apply-templates>
+                  <xsl:apply-templates select="." mode="li"/>
                 </xsl:otherwise>
               </xsl:choose>
             </xsl:for-each>
           </ol>
         </li>
+      </xsl:when>
+      <xsl:when test="self::tei:body">
+        <xsl:apply-templates select="tei:castList | tei:div | tei:div1 | tei:titlePage" mode="li"/>
+      </xsl:when>
+      <!-- div content -->
+      <xsl:otherwise>
+        <xsl:apply-templates select="tei:castList | tei:div | tei:div1 | tei:titlePage" mode="li"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -267,7 +300,7 @@ mais aussi pour le liage dans l'apparat critique. Ce mode fait usage des modes 
         <xsl:otherwise>
           <ol>
             <xsl:apply-templates select="tei:front" mode="li"/>
-            <xsl:apply-templates select="tei:body/*" mode="li"/>
+            <xsl:apply-templates select="tei:body" mode="li"/>
             <xsl:apply-templates select="tei:back" mode="li"/>
           </ol>
         </xsl:otherwise>
@@ -281,10 +314,13 @@ mais aussi pour le liage dans l'apparat critique. Ce mode fait usage des modes 
     <xsl:param name="less" select="0"/>
     <!-- limit depth -->
     <xsl:param name="depth"/>
+    <!-- enfants ? -->
+    <xsl:variable name="children" select="tei:group | tei:text | tei:div[tei:head] 
+      | tei:div0[tei:head] | tei:div1[tei:head] | tei:div2[tei:head] | tei:div3[tei:head] | tei:div4[tei:head] | tei:div5[tei:head] | tei:div6[tei:head] | tei:div7[tei:head] "/>
     <li>
       <xsl:choose>
         <!-- last level -->
-        <xsl:when test="count(tei:back | tei:body | tei:div | tei:div0 | tei:div1 | tei:div2 | tei:div3 | tei:div4 | tei:div5 | tei:div6 | tei:div7 | tei:front | tei:group | tei:text ) &lt; 1"/>
+        <xsl:when test="count($children) &lt; 1"/>
         <!-- let open -->
         <xsl:when test="number($depth) &lt; 2"/>
         <xsl:when test="number($less) &gt; 0">
@@ -298,8 +334,7 @@ mais aussi pour le liage dans l'apparat critique. Ce mode fait usage des modes 
       <xsl:choose>
         <!-- depth found, stop -->
         <xsl:when test="$depth = 0"/>
-        <xsl:when test="count(tei:group | tei:text | tei:div 
-        | tei:div0 | tei:div1 | tei:div2 | tei:div3 | tei:div4 | tei:div5 | tei:div6 | tei:div7 ) &gt; 0">
+        <xsl:when test="count($children) &gt; 1">
           <ol>
             <xsl:if test="$class">
               <xsl:attribute name="class">
@@ -309,7 +344,7 @@ mais aussi pour le liage dans l'apparat critique. Ce mode fait usage des modes 
             <xsl:for-each select="tei:back | tei:body | tei:castList | tei:div | tei:div0 | tei:div1 | tei:div2 | tei:div3 | tei:div4 | tei:div5 | tei:div6 | tei:div7 | tei:front | tei:group | tei:text">
               <xsl:choose>
                 <!-- ??? first section with no title, no forged title -->
-                <xsl:when test="self::div and position() = 1 and not(tei:head) and ../tei:head "/>
+                <xsl:when test="not(tei:head)"/>
                 <xsl:otherwise>
                   <xsl:apply-templates select="." mode="li">
                     <xsl:with-param name="less" select="number($less) - 1"/>
@@ -329,36 +364,6 @@ mais aussi pour le liage dans l'apparat critique. Ce mode fait usage des modes 
             <xsl:call-template name="a"/>
           </xsl:when>
       -->
-  </xsl:template>
-  <!-- Générer une navigation dans les sections -->
-  <xsl:template name="toc">
-    <xsl:param name="less"/>
-    <xsl:param name="depth">
-      <xsl:choose>
-        <xsl:when test="key('id', 'toc-depth')">
-          <xsl:value-of select="key('id', 'toc-depth')/@n"/>
-        </xsl:when>
-      </xsl:choose>
-    </xsl:param>
-    <ol class="tree">
-      <xsl:apply-templates select="/*/tei:text/tei:front" mode="li"/>
-      <xsl:apply-templates select="/*/tei:text/tei:body" mode="li"/>
-      <xsl:apply-templates select="/*/tei:text/tei:group/*" mode="li"/>
-      <!-- back in one <li> to hide some by default  -->
-      <xsl:if test="/*/tei:text/tei:back[tei:div[normalize-space(.) != '']|tei:div1[normalize-space(.) != '']]">
-        <li class="more">
-          <span>
-            <xsl:apply-templates select="/*/tei:text/tei:back" mode="title"/>
-          </span>
-          <ol>
-            <xsl:apply-templates select="/*/tei:text/tei:back/*[normalize-space(.) != '']" mode="li">
-              <xsl:with-param name="depth" select="$depth"/>
-              <xsl:with-param name="less" select="$less"/>
-            </xsl:apply-templates>
-          </ol>
-        </li>
-      </xsl:if>
-    </ol>
   </xsl:template>
   <xsl:template name="toc-front">
     <xsl:for-each select="/*/tei:text/tei:front">

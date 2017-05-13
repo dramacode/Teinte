@@ -17,7 +17,7 @@ Doit pouvoir fonctionner en import.
 TODO: listes, tables, liens
 
 -->
-<xsl:transform version="1.1"
+<xsl:transform version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns="http://www.tei-c.org/ns/1.0"
   xmlns:tei="http://www.tei-c.org/ns/1.0"
@@ -200,7 +200,13 @@ TODO: listes, tables, liens
   </xsl:template>
   <xsl:template match="tei:speaker" mode="md">
     <xsl:text>    </xsl:text>
-    <xsl:apply-templates mode="md"/>
+    <xsl:variable name="raw">
+      <xsl:apply-templates mode="md"/>
+    </xsl:variable>
+    <xsl:variable name="speaker" select="normalize-space($raw)"/>
+    <xsl:value-of select="$speaker"/>
+    <xsl:variable name="last" select="substring($speaker, string-length($speaker))"/>
+    <xsl:if test="$last != '.' and $last != '?' and $last != '!' and $last != '…'">.</xsl:if>
   </xsl:template>
   <xsl:template match="tei:speaker/text()" mode="md">
     <xsl:value-of select="translate(., $lc, $uc)"/>
@@ -464,7 +470,10 @@ TODO: listes, tables, liens
     <xsl:value-of select="$lf"/>
     <xsl:value-of select="substring('######', 1, $level)"/>
     <xsl:text> </xsl:text>
-    <xsl:value-of select="normalize-space($text)"/>
+    <xsl:variable name="head" select="normalize-space($text)"/>
+    <xsl:value-of select="$head"/>
+    <xsl:variable name="last" select="substring($head, string-length($head))"/>
+    <xsl:if test="$last != '.' and $last != '?' and $last != '!' and $last != '…'">.</xsl:if>
   </xsl:template>
 
   
