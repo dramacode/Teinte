@@ -5,6 +5,9 @@
 // cli usage
 Teinte_Build::deps();
 set_time_limit(-1);
+error_reporting(-1);
+set_time_limit(0);
+header( 'content-type: text/html; charset=utf-8' );
 
 
 if (realpath($_SERVER['SCRIPT_FILENAME']) != realpath(__FILE__)) {
@@ -91,8 +94,7 @@ END;
   /** valeur par défaut de la configuration */
   public $conf = array(
     "destdir" => "",
-    "formats" => "site, epub, kindle",
-    "cmdup" => "git pull 2>&1",
+    "formats" => "article, toc, epub, kindle",
     "logger" => "php://output",
     "logfile" => null,
   );
@@ -310,7 +312,6 @@ END;
     if ( !is_array( $glob ) ) $glob = array( $glob );
     foreach ( $glob as $path ) {
       foreach( glob( $path ) as $srcfile) {
-        // echo "\n".$srcfile." ".$force;
         $this->_file( $srcfile, $force, $props );
       }
     }
@@ -568,8 +569,9 @@ END;
     $usage = "\nusage    : php -f ".basename(__FILE__).' conf.php
 usage    : php -f '.basename(__FILE__).' base.sqlite action "dir/*.xml"'."\n\n";
     array_shift($_SERVER['argv']); // shift first arg, the script filepath
-    if ( count($_SERVER['argv']) == 1 ) {
-      $path = $_SERVER['argv'][0];
+    if ( count($_SERVER['argv']) < 2 ) {
+      if ( count($_SERVER['argv']) ) $path = $_SERVER['argv'][0];
+      else $path = "conf.php";
       if ( !file_exists( $path ) ) exit( $path+" — ce fichier n’existe pas." );
       $conf = include( $path );
       $build = new Teinte_Build( $conf );

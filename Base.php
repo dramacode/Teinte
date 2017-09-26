@@ -1,4 +1,5 @@
 <?php
+include_once( dirname(dirname(__FILE__))."/Teinte/Web.php" );
 class Teinte_Base
 {
   /** sqlite File  */
@@ -22,7 +23,10 @@ class Teinte_Base
    */
   public function __construct( $sqlitefile = null, $lang = null, $path="", $pars = array() )
   {
-    if ( !file_exists( $sqlitefile ) ) return false;
+    if ( !file_exists( $sqlitefile ) ) {
+      echo '<h1>Première installation ? Allez voir la page <a href="pull.php">pull.php</a> pour transformer vos fichiers XML.</h1>';
+      exit();
+    }
     $this->_sqlitefile = $sqlitefile;
     $this->pdo = new PDO("sqlite:".$sqlitefile);
     $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING ); // get error as classical PHP warn
@@ -115,7 +119,7 @@ class Teinte_Base
     $replace = array();
     // hilite (use a tricky indexation in teipub to get correct positions)
     // this tricky query is the right one on some flavours of sqlite 3
-    $query = $this->pdo->prepare('SELECT text, offsets(search) AS offsets FROM search, doc WHERE doc.id=search.docid AND doc.id=? AND text MATCH ?') ;
+    $query = $this->pdo->prepare( 'SELECT text, offsets(search) AS offsets FROM search, doc WHERE doc.id=search.docid AND doc.id=? AND text MATCH ?' ) ;
     $query->execute( array( $docid, $q ) );
     // TODO, join quote expressions
     $mark = 0;
